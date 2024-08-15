@@ -1,4 +1,8 @@
 -r requirements_base.txt
 
-onnxruntime-gpu==1.18.0
+onnxruntime==1.16.3
 transformers==4.22.0
+
+torch==2.0.0
+torchvision==0.15.0
+torchaudio==2.0.0
