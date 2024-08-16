@@ -16,6 +16,8 @@ RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86
     rm /tmp/miniconda.sh && \
     /opt/conda/bin/conda clean -a -y
 
+RUN apt-get update && apt-get install -y libgl1-mesa-glx
+
 # Clone the LivePortrait repository
 RUN git clone --branch feature/docker-deployment https://github.com/Guy--L/live-portrait.git /workspace/LivePortrait
 
