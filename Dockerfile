@@ -1,31 +1,36 @@
-# Use the CUDA image with cuDNN support
+# Use an official CUDA base image from NVIDIA
 FROM nvidia/cuda:11.8.0-cudnn8-devel-ubuntu20.04
 
-# Set the working directory inside the container
-WORKDIR /app
+# Set environment variables for Conda
+ENV PATH /opt/conda/bin:$PATH
 
-# Install Python and pip
+# Install dependencies
 RUN apt-get update && apt-get install -y \
-    python3 \
-    python3-pip \
     git \
+    wget \
     && rm -rf /var/lib/apt/lists/*
 
-# Optional: Create a symlink for python3 to be accessed via python
-RUN ln -s /usr/bin/python3 /usr/bin/python
+# Install Conda
+RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /tmp/miniconda.sh && \
+    bash /tmp/miniconda.sh -b -p /opt/conda && \
+    rm /tmp/miniconda.sh && \
+    /opt/conda/bin/conda clean -tipsy
 
-# Copy your project files into the container
-COPY . /app
+# Clone the LivePortrait repository
+RUN git clone https://github.com/KwaiVGI/LivePortrait /workspace/LivePortrait
 
-# Install Python dependencies
-RUN pip3 install --upgrade pip setuptools wheel
-RUN pip3 install --no-cache-dir -r requirements.txt
+# Set the working directory
+WORKDIR /workspace/LivePortrait
 
-# (Optional) Set environment variables if needed
-ENV MODEL_DIR=/app/pretrained_weights
+# Create Conda environment and install dependencies
+RUN conda create -n LivePortrait python=3.9 -y && \
+    echo "source activate LivePortrait" > ~/.bashrc && \
+    /opt/conda/bin/conda init bash && \
+    /bin/bash -c "source ~/.bashrc && conda activate LivePortrait && \
+    pip install torch==2.3.0 torchvision==0.18.0 torchaudio==2.3.0 --index-url https://download.pytorch.org/whl/cu118 && \
+    pip install -r requirements.txt && \
+    pip install -U 'huggingface_hub[cli]' && \
+    huggingface-cli download KwaiVGI/LivePortrait --local-dir pretrained_weights --exclude '*.git*' 'README.md' 'docs'"
 
-# Expose any necessary ports (if your app has a web interface or API)
-EXPOSE 23405
-
-# Command to run your application
-CMD ["python", "inference_api.py"]
+# Set the default command to activate the Conda environment
+CMD ["bash", "-c", "source activate LivePortrait && bash"]
