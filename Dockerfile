@@ -2,7 +2,7 @@
 FROM nvidia/cuda:11.8.0-cudnn8-devel-ubuntu20.04
 
 # Set environment variables for Conda
-ENV PATH /opt/conda/bin:$PATH
+ENV PATH="/opt/conda/bin:$PATH"
 
 # Install dependencies
 RUN apt-get update && apt-get install -y \
@@ -14,10 +14,10 @@ RUN apt-get update && apt-get install -y \
 RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /tmp/miniconda.sh && \
     bash /tmp/miniconda.sh -b -p /opt/conda && \
     rm /tmp/miniconda.sh && \
-    /opt/conda/bin/conda clean -tipsy
+    /opt/conda/bin/conda clean -a -y
 
 # Clone the LivePortrait repository
-RUN git clone https://github.com/KwaiVGI/LivePortrait /workspace/LivePortrait
+RUN git clone --branch feature/docker-deployment https://github.com/Guy--L/live-portrait.git /workspace/LivePortrait
 
 # Set the working directory
 WORKDIR /workspace/LivePortrait
