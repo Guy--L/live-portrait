@@ -110,4 +110,4 @@ if __name__ == "__main__":
         port = int(sys.argv[2])
 
     # Run the application with the specified host and port
-    app.run(host=ip_address, port=port)
+    app.run(host=ip_address, port=port, ssl_context=('cert.pem', 'key.pem'))
