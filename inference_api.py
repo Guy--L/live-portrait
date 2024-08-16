@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify
+from flask_restx import Api, Resource, fields
 import os
 import os.path as osp
 import subprocess
@@ -8,6 +9,12 @@ from src.config.crop_config import CropConfig
 from src.live_portrait_pipeline import LivePortraitPipeline
 
 app = Flask(__name__)
+
+api = Api(app, version='1.0', title='LivePortrait API',
+          description='A simple demonstration of Flask-RESTx')
+
+# Define a namespace for your API
+ns = api.namespace('items', description='Item operations')
 
 def partial_fields(target_class, kwargs):
     return target_class(**{k: v for k, v in kwargs.items() if hasattr(target_class, k)})
@@ -79,4 +86,5 @@ def api_process_image():
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(host='209.20.157.223', port=32768)
+#    app.run(host='209.20.157.223', port=23405)
+    app.run(host='127.0.0.1', port=5000)
