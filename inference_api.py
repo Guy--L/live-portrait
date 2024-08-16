@@ -87,4 +87,4 @@ def api_process_image():
 
 if __name__ == '__main__':
 #    app.run(host='209.20.157.223', port=23405)
-    app.run(host='148.77.2.74', port=56913)
+    app.run(host='127.0.0.1', port=10087)
