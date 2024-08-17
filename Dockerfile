@@ -26,13 +26,13 @@ WORKDIR /workspace/LivePortrait
 
 # Create Conda environment and install dependencies
 RUN conda create -n LivePortrait python=3.9 -y && \
-    echo "source activate LivePortrait" > ~/.bashrc && \
-    /opt/conda/bin/conda init bash && \
-    /bin/bash -c "source ~/.bashrc && conda activate LivePortrait && \
+    /bin/bash -c "conda activate LivePortrait && \
     pip install torch==2.3.0 torchvision==0.18.0 torchaudio==2.3.0 --index-url https://download.pytorch.org/whl/cu118 && \
     pip install -r requirements.txt && \
     pip install -U 'huggingface_hub[cli]' && \
     huggingface-cli download KwaiVGI/LivePortrait --local-dir pretrained_weights --exclude '*.git*' 'README.md' 'docs'"
 
+EXPOSE 5000
+
 # Set the default command to activate the Conda environment
-CMD ["bash", "-c", "source activate LivePortrait && bash"]
+CMD ["bash", "-c", "conda activate LivePortrait && python inference_api.py"]
