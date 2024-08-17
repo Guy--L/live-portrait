@@ -11,7 +11,7 @@ DRIVING=$2
 OUTPUT="output.mp4"
 
 # Execute the curl command to call the API
-curl -X POST -F "source=@${SOURCE}" -F "driving=@${DRIVING}" http://localhost:5000/process_image --output ${OUTPUT}
+curl -X POST -F "source=@${SOURCE}" -F "driving=@${DRIVING}" http://129.146.98.20:16515/process_image --output ${OUTPUT}
 
 # Check if the output file was successfully created
 if [ -f "$OUTPUT" ]; then

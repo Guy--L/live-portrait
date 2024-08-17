@@ -1,5 +1,4 @@
-from flask import Flask, request, jsonify
-from flask_restx import Api, Resource, fields
+from flask import Flask, request, jsonify, send_file
 import os
 import os.path as osp
 import subprocess
@@ -9,18 +8,6 @@ from src.config.crop_config import CropConfig
 from src.live_portrait_pipeline import LivePortraitPipeline
 
 app = Flask(__name__)
-
-api = Api(app, version='1.0', title='LivePortrait API',
-          description='LivePortrait API')
-
-# Define a namespace for your API
-ns = api.namespace('image_processing', description='Image processing operations')
-
-# Define the model for the /process_image endpoint
-upload_model = ns.model('Upload', {
-    'source': fields.String(required=True, description='Source image file path'),
-    'driving': fields.String(required=True, description='Driving image file path')
-})
 
 def partial_fields(target_class, kwargs):
     return target_class(**{k: v for k, v in kwargs.items() if hasattr(target_class, k)})
@@ -38,11 +25,12 @@ def fast_check_args(args: ArgumentConfig):
     if not osp.exists(args.driving):
         raise FileNotFoundError(f"driving info not found: {args.driving}")
 
-def process_image(source_path, driving_path, output_path):
+def process_image(source_path, driving_path):
+
     args = ArgumentConfig(
         source=source_path,
         driving=driving_path,
-        output=output_path
+
     )
 
     ffmpeg_dir = os.path.join(os.getcwd(), "ffmpeg")
@@ -66,35 +54,40 @@ def process_image(source_path, driving_path, output_path):
 
     live_portrait_pipeline.execute(args)
 
-@ns.route('/process_image')
-class ProcessImageResource(Resource):
-    @ns.expect(upload_model)
-    def post(self):
-        """Process an image"""
-        if 'source' not in request.files or 'driving' not in request.files:
-            return jsonify({'error': 'Missing source or driving file'}), 400
+    source_filename = os.path.splitext(os.path.basename(source_path))[0]
+    driving_filename = os.path.splitext(os.path.basename(driving_path))[0]
+    output_filename = f"{source_filename}--{driving_filename}_concat.mp4"
 
-        source_file = request.files['source']
-        driving_file = request.files['driving']
+    animations_dir = os.path.join(os.getcwd(), 'animations')
+    output_path = os.path.join(animations_dir, output_filename)
 
-        source_path = os.path.join('uploads', source_file.filename)
-        driving_path = os.path.join('uploads', driving_file.filename)
-        output_path = os.path.join('output', 'result.mp4')
+    return output_path
 
-        os.makedirs('uploads', exist_ok=True)
-        os.makedirs('output', exist_ok=True)
+@app.route('/process_image', methods=['POST'])
+def api_process_image():
+    if 'source' not in request.files or 'driving' not in request.files:
+        return jsonify({'error': 'Missing source or driving file'}), 400
 
-        source_file.save(source_path)
-        driving_file.save(driving_path)
+    source_file = request.files['source']
+    driving_file = request.files['driving']
 
-        try:
-            process_image(source_path, driving_path, output_path)
-            return jsonify({'result': output_path}), 200
-        except Exception as e:
-            return jsonify({'error': str(e)}), 500
+    source_path = os.path.join('uploads', source_file.filename)
+    driving_path = os.path.join('uploads', driving_file.filename)
 
-# Add the namespace to the API
-api.add_namespace(ns)
+    os.makedirs('uploads', exist_ok=True)
+
+
+    source_file.save(source_path)
+    driving_file.save(driving_path)
+
+    try:
+        output_path = process_image(source_path, driving_path)
+
+        if not osp.exists(output_path):
+           return jsonify({'error': 'Output video file does not exist'}), 500
+        return send_file(output_path, mimetype='video/mp4', as_attachment=True, download_name='result.mp4')
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == "__main__":
     # Run the application with the specified host and port
