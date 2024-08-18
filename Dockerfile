@@ -24,4 +24,4 @@ RUN conda create -n LivePortrait python=3.9 -y && /bin/bash -c "source activate 
 EXPOSE 5000
 
 # Set the default command to activate the Conda environment
-CMD ["bash", "-c", "source activate LivePortrait && python api.py"]
+CMD ["bash", "-c", "source activate LivePortrait && python inference_api.py"]
